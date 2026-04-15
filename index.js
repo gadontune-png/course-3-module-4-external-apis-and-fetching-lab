@@ -13,7 +13,7 @@ const weatherApi = "https://api.weather.gov/alerts/active?area="
 
   try {
     // Fetch using the input state abbreviation
-    const response = await fetch("https://api.weather.gov/alerts/active?area=${state}");
+    const response = await fetch(https://api.weather.gov/alerts/active?area=${state});
     if (!response.ok) throw new Error("Invalid state code or API error");
 
     const data = await response.json();
@@ -35,7 +35,7 @@ function displayAlerts(data, state) {
 
   // Title + number of alerts
   const summary = document.createElement('h2');
-  summary.textContent = "CurrentWatches, warnings, andAdvisoriesFor ${state}: ${data.features.length}" 
+  summary.textContent = Current watches, warnings, and advisories for ${state}: ${data.features.length};
   alertsDisplay.appendChild(summary);
 
   // List each alert headline
