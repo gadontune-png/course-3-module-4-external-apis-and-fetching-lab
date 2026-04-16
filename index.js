@@ -1,19 +1,21 @@
-const weatherApi =("https://api.weather.gov/alerts/active?area=")
+
 
 // // Your code here!
+const weatherApi =(`https://api.weather.gov/alerts/active?area=${state}`)
 
     async function fetchWeatherAlerts(state) {
   const errorDiv = document.getElementById('error-message');
   const alertsDisplay = document.getElementById('alerts-display');
 
   // Clear previous results and errors
-  alertsDisplay.innerHTML = '';
-  errorDiv.textContent = '';
+  alertsDisplay.innerHTML = (',');
+  errorDiv.textContent = (',');
   errorDiv.classList.add('hidden');
 
   try {
     // Fetch using the input state abbreviation
-    const response = await fetch("https://api.weather.gov/alerts/active?area=${state}");
+    
+    const response = await fetch(`https://api.weather.gov/alerts/active?area=${state}`);
     if (!response.ok) throw new Error("Invalid state code or API error");
 
     const data = await response.json();
