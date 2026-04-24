@@ -1,86 +1,73 @@
-// Get DOM elements
-const button = document.getElementById("fetch-alerts");
+// DOM elements
 const input = document.getElementById("state-input");
-const alertsDisplay = document.getElementById("alerts-display");
-const errorMessage = document.getElementById("error-message");
+const button = document.getElementById("fetch-alerts");
+const display = document.getElementById("alerts-display");
+const errorDiv = document.getElementById("error-message");
 
-// Fetch alerts when button is clicked
-button.addEventListener("click", () => {
-    const state = input.value.trim().toUpperCase();
+// Event listener
+button.addEventListener("click", handleSearch);
 
-    if (!state) {
-        showError("Please enter a state abbreviation (e.g., CA, TX, MN)");
+
+function handleSearch() {
+    const city = input.value.trim();
+
+    if (!city) {
+        displayError("Please enter a city name.");
         return;
     }
 
-    fetchWeatherAlerts(state);
-});
-
-// Step 1: Fetch data from API
-async function fetchWeatherAlerts(state) {
-    const url = `https://api.weather.gov/alerts/active?area=${state}`;
-
-    try {
-        clearError();
-        alertsDisplay.innerHTML = "Loading alerts...";
-
-        const response = await fetch(url);
-
-        if (!response.ok) {
-            throw new Error(`Failed to fetch data (Status: ${response.status})`);
-        }
-
-        const data = await response.json();
-
-        console.log("API DATA:", data); // Debugging
-
-        displayAlerts(data, state);
-
-    } catch (error) {
-        console.log(error);
-        showError("Unable to fetch weather alerts. Please try again.");
-        alertsDisplay.innerHTML = "";
-    }
+    fetchWeatherData(city);
 }
 
-// Step 2: Display alerts in the DOM
-function displayAlerts(data, state) {
-    alertsDisplay.innerHTML = "";
+function fetchWeatherData(city) {
+    const apiKey = "dbbf513ecfca4c6b4004fb3a1362ebdb"; 
+    const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`;
 
-    const alerts = data.features;
-
-    // Summary
-    const summary = document.createElement("h3");
-    summary.textContent = `Current watches, warnings, and advisories for ${state}: ${alerts.length}`;
-    alertsDisplay.appendChild(summary);
-
-    // No alerts case
-    if (alerts.length === 0) {
-        const noAlerts = document.createElement("p");
-        noAlerts.textContent = "No active alerts.";
-        alertsDisplay.appendChild(noAlerts);
-        return;
-    }
-
-    // Alerts list
-    const list = document.createElement("ul");
-
-    alerts.forEach(alert => {
-        const listItem = document.createElement("li");
-        listItem.textContent = alert.properties.headline;
-        list.appendChild(listItem);
-    });
-
-    alertsDisplay.appendChild(list);
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("City not found");
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log(data); 
+            displayWeather(data);
+        })
+        .catch(error => {
+            console.log(error);
+            displayError("City not found or API error.");
+        });
 }
 
-// Error handling
-function showError(message) {
-    errorMessage.textContent = message;
-    errorMessage.classList.remove("hidden");
+
+
+function displayWeather(data) {
+    clearError();
+    display.innerHTML = "";
+
+    const { name } = data;
+    const { temp, humidity } = data.main;
+    const description = data.weather[0].description;
+
+    display.innerHTML = `
+        <h2>Weather in ${name}</h2>
+        <p>Temperature: ${temp} °C</p>
+        <p>Humidity: ${humidity}%</p>
+        <p>Description: ${description}</p>
+    `;
 }
 
+
+function displayError(message) {
+    display.innerHTML = ""; // clear previous data
+    errorDiv.textContent = message;
+    errorDiv.classList.remove("hidden");
+}
+
+
+// Helper (Advanced Functionality ✔)
 function clearError() {
-    errorMessage.textContent = "";
-    errorMessage.classList.add("hidden");
+    errorDiv.textContent = "";
+    errorDiv.classList.add("hidden");
 }
