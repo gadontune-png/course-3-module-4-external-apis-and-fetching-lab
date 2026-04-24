@@ -1,64 +1,86 @@
-async function fetchWeatherAlerts(state) {
-  const errorDiv = document.getElementById('error-message');
-  const inputField = document.getElementById('state-input');
+// Get DOM elements
+const button = document.getElementById("fetch-alerts");
+const input = document.getElementById("state-input");
+const alertsDisplay = document.getElementById("alerts-display");
+const errorMessage = document.getElementById("error-message");
 
-  try {
-    //Clear previous errors and reset input field
-    errorDiv.textContent = '';
-    errorDiv.style.display = 'none';
-    inputField.value = ''; 
+// Fetch alerts when button is clicked
+button.addEventListener("click", () => {
+    const state = input.value.trim().toUpperCase();
 
-    const response = await fetch(`https://api.weather.gov/alerts/active?area=${state}`);
-
-    if (!response.ok) {
-      throw new Error(`Invalid state code or API error (Status: ${response.status})`);
+    if (!state) {
+        showError("Please enter a state abbreviation (e.g., CA, TX, MN)");
+        return;
     }
 
-    const data = await response.json();
-    
-    // displayAlerts() handles clearing previous data internally
-    displayAlerts(data);
+    fetchWeatherAlerts(state);
+});
 
-  } catch (errorObject) {
-    // Handle and display errors in the UI
-    errorDiv.textContent = errorObject.message;
-    errorDiv.style.display = 'block';
-    
-    // Clear the alerts container so old data doesn't stick around during an error
-    document.getElementById('alerts-container').innerHTML = '';
-  }
+// Step 1: Fetch data from API
+async function fetchWeatherAlerts(state) {
+    const url = `https://api.weather.gov/alerts/active?area=${state}`;
+
+    try {
+        clearError();
+        alertsDisplay.innerHTML = "Loading alerts...";
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch data (Status: ${response.status})`);
+        }
+
+        const data = await response.json();
+
+        console.log("API DATA:", data); // Debugging
+
+        displayAlerts(data, state);
+
+    } catch (error) {
+        console.log(error);
+        showError("Unable to fetch weather alerts. Please try again.");
+        alertsDisplay.innerHTML = "";
+    }
 }
 
-fetchWeatherAlerts('NY');
+// Step 2: Display alerts in the DOM
+function displayAlerts(data, state) {
+    alertsDisplay.innerHTML = "";
 
+    const alerts = data.features;
 
-function displayAlerts(data) {
-  const container = document.getElementById('alerts-container');
-  
-  // Clear any previous results
-  container.innerHTML = '';
+    // Summary
+    const summary = document.createElement("h3");
+    summary.textContent = `Current watches, warnings, and advisories for ${state}: ${alerts.length}`;
+    alertsDisplay.appendChild(summary);
 
-  // 1. Get the number of alerts (length of the 'features' array)
-  const alertCount = data.features.length;
-  const title = data.title; // This is the title property from the API response
+    // No alerts case
+    if (alerts.length === 0) {
+        const noAlerts = document.createElement("p");
+        noAlerts.textContent = "No active alerts.";
+        alertsDisplay.appendChild(noAlerts);
+        return;
+    }
 
-  // 2. Create and show the summary message
-  const summary = document.createElement('h3');
-  summary.textContent = `${title}: ${alertCount}`;
-  container.appendChild(summary);
+    // Alerts list
+    const list = document.createElement("ul");
 
-  // 3. Create a list for the headlines
-  const list = document.createElement('ul');
+    alerts.forEach(alert => {
+        const listItem = document.createElement("li");
+        listItem.textContent = alert.properties.headline;
+        list.appendChild(listItem);
+    });
 
-  // 4. Loop through 'features' to get each 'properties.headline'
-  data.features.forEach(alert => {
-    const listItem = document.createElement('li');
-    listItem.textContent = alert.properties.headline;
-    list.appendChild(listItem);
-  });
-
-  // Add the full list to the container
-  container.appendChild(list);
+    alertsDisplay.appendChild(list);
 }
 
+// Error handling
+function showError(message) {
+    errorMessage.textContent = message;
+    errorMessage.classList.remove("hidden");
+}
 
+function clearError() {
+    errorMessage.textContent = "";
+    errorMessage.classList.add("hidden");
+}
