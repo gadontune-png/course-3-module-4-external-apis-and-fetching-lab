@@ -1,53 +1,65 @@
 document.getElementById("fetch-alerts").addEventListener("click", function () {
-    const city = document.getElementById("state-input").value.trim();
-    fetchWeatherData(city);
+    const state = document.getElementById("state-input").value.trim().toUpperCase();
+    fetchWeatherAlerts(state);
 });
 
-// Fetch weather data
-function fetchWeatherData(city) {
-    const apiKey = "YOUR_API_KEY";
-    const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`;
+function fetchWeatherAlerts(state) {
+    const url = `https://api.weather.gov/alerts/active?area=${state}`;
 
     fetch(url)
         .then(response => {
             if (!response.ok) {
-                throw new Error("City not found");
+                throw new Error("Failed to fetch alerts");
             }
             return response.json();
         })
         .then(data => {
             console.log(data);
-            displayWeather(data);
+            displayAlerts(data, state);
         })
         .catch(error => {
-            console.log(error.message);
             displayError(error.message);
         });
 }
 
-
-//Display weather data
-function displayWeather(data) {
+function displayAlerts(data, state) {
     const display = document.getElementById("alerts-display");
     const errorDiv = document.getElementById("error-message");
+    const input = document.getElementById("state-input");
 
+    // CLEAR ERROR
     errorDiv.textContent = "";
     errorDiv.classList.add("hidden");
 
-    display.innerHTML = `
-        <p>Temperature: ${data.main.temp} °C</p>
-        <p>Humidity: ${data.main.humidity}%</p>
-        <p>Description: ${data.weather[0].description}</p>
-    `;
+    // CLEAR OLD RESULTS
+    display.innerHTML = "";
+
+    const alerts = data.features;
+
+    //  SUMMARY FORMAT
+    const title = document.createElement("h3");
+    title.textContent =
+        `Current watches, warnings, and advisories for ${state}: ${alerts.length}`;
+
+    display.appendChild(title);
+
+    // LIST HEADLINES
+    const list = document.createElement("ul");
+
+    alerts.forEach(alert => {
+        const li = document.createElement("li");
+        li.textContent = alert.properties.headline;
+        list.appendChild(li);
+    });
+
+    display.appendChild(list);
+
+    //CLEAR INPUT AFTER SUCCESS
+    input.value = "";
 }
 
-
-//Display error
 function displayError(message) {
-    const display = document.getElementById("alerts-display");
     const errorDiv = document.getElementById("error-message");
-
-    display.innerHTML = "";
 
     errorDiv.textContent = message;
     errorDiv.classList.remove("hidden");
