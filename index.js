@@ -1,72 +1,80 @@
-// DOM elements
+// DOM
 const input = document.getElementById("state-input");
 const button = document.getElementById("fetch-alerts");
 const display = document.getElementById("alerts-display");
 const errorDiv = document.getElementById("error-message");
 
-// Event listener
-button.addEventListener("click", handleSearch);
+button.addEventListener("click", () => {
+    const state = input.value.trim().toUpperCase();
 
-
-function handleSearch() {
-    const city = input.value.trim();
-
-    if (!city) {
-        displayError("Please enter a city name.");
+    if (!state) {
+        displayError("Please enter a state abbreviation.");
         return;
     }
 
-    fetchWeatherData(city);
-}
+    fetchWeatherAlerts(state);
+});
 
-function fetchWeatherData(city) {
-    const apiKey = "dbbf513ecfca4c6b4004fb3a1362ebdb"; 
-    const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`;
+
+
+function fetchWeatherAlerts(state) {
+    const url = `https://api.weather.gov/alerts/active?area=${state}`;
 
     fetch(url)
         .then(response => {
             if (!response.ok) {
-                throw new Error("City not found");
+                throw new Error("Network error");
             }
             return response.json();
         })
         .then(data => {
-            console.log(data); 
-            displayWeather(data);
+            console.log(data);
+            displayAlerts(data, state);
         })
         .catch(error => {
             console.log(error);
-            displayError("City not found or API error.");
+            displayError("Failed to fetch weather alerts.");
         });
 }
 
 
-
-function displayWeather(data) {
+//  DISPLAY FUNCTION
+function displayAlerts(data, state) {
     clearError();
     display.innerHTML = "";
 
-    const { name } = data;
-    const { temp, humidity } = data.main;
-    const description = data.weather[0].description;
+    const alerts = data.features;
 
-    display.innerHTML = `
-        <h2>Weather in ${name}</h2>
-        <p>Temperature: ${temp} °C</p>
-        <p>Humidity: ${humidity}%</p>
-        <p>Description: ${description}</p>
-    `;
+    const title = document.createElement("h3");
+    title.textContent = `Current watches, warnings, and advisories for ${state}: ${alerts.length}`;
+    display.appendChild(title);
+
+    if (alerts.length === 0) {
+        display.innerHTML += "<p>No active alerts.</p>";
+        return;
+    }
+
+    const list = document.createElement("ul");
+
+    alerts.forEach(alert => {
+        const li = document.createElement("li");
+        li.textContent = alert.properties.headline;
+        list.appendChild(li);
+    });
+
+    display.appendChild(list);
 }
 
 
+// ERROR FUNCTION
 function displayError(message) {
-    display.innerHTML = ""; // clear previous data
+    display.innerHTML = "";
     errorDiv.textContent = message;
     errorDiv.classList.remove("hidden");
 }
 
 
-// Helper (Advanced Functionality ✔)
+// helper
 function clearError() {
     errorDiv.textContent = "";
     errorDiv.classList.add("hidden");
