@@ -1,81 +1,40 @@
-// DOM
-const input = document.getElementById("state-input");
-const button = document.getElementById("fetch-alerts");
-const display = document.getElementById("alerts-display");
-const errorDiv = document.getElementById("error-message");
-
-button.addEventListener("click", () => {
-    const state = input.value.trim().toUpperCase();
-
-    if (!state) {
-        displayError("Please enter a state abbreviation.");
-        return;
-    }
-
-    fetchWeatherAlerts(state);
-});
-
-
-
-function fetchWeatherAlerts(state) {
-    const url = `https://api.weather.gov/alerts/active?area=${state}`;
+function fetchWeatherData(city) {
+    const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=YOUR_API_KEY`;
 
     fetch(url)
         .then(response => {
             if (!response.ok) {
-                throw new Error("Network error");
+                throw new Error("Failed to fetch data");
             }
             return response.json();
         })
         .then(data => {
             console.log(data);
-            displayAlerts(data, state);
+            displayWeather(data);
         })
         .catch(error => {
             console.log(error);
-            displayError("Failed to fetch weather alerts.");
+            displayError("Failed to retrieve weather data");
         });
 }
 
-
-//  DISPLAY FUNCTION
-function displayAlerts(data, state) {
-    clearError();
+function displayWeather(data) {
+    const display = document.getElementById("alerts-display");
     display.innerHTML = "";
 
-    const alerts = data.features;
+    const temp = data.main.temp;
+    const humidity = data.main.humidity;
+    const description = data.weather[0].description;
 
-    const title = document.createElement("h3");
-    title.textContent = `Current watches, warnings, and advisories for ${state}: ${alerts.length}`;
-    display.appendChild(title);
-
-    if (alerts.length === 0) {
-        display.innerHTML += "<p>No active alerts.</p>";
-        return;
-    }
-
-    const list = document.createElement("ul");
-
-    alerts.forEach(alert => {
-        const li = document.createElement("li");
-        li.textContent = alert.properties.headline;
-        list.appendChild(li);
-    });
-
-    display.appendChild(list);
+    display.innerHTML = `
+        <p>Temperature: ${temp} °C</p>
+        <p>Humidity: ${humidity}%</p>
+        <p>Description: ${description}</p>
+    `;
 }
 
-
-// ERROR FUNCTION
 function displayError(message) {
-    display.innerHTML = "";
+    const errorDiv = document.getElementById("error-message");
     errorDiv.textContent = message;
     errorDiv.classList.remove("hidden");
-}
-
-
-// helper
-function clearError() {
-    errorDiv.textContent = "";
-    errorDiv.classList.add("hidden");
 }
